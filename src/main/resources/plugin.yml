@@ -1,0 +1,5 @@
+main: org.hinoob.chess.ChessPlugin
+version: 1
+name: chess
+
+api-version: 1.13

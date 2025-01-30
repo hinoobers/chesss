@@ -1,17 +1,37 @@
 package org.hinoob.chess;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.hinoob.chess.arena.ArenaManager;
+import org.hinoob.chess.command.CommandManager;
+import org.hinoob.chess.game.GameManager;
+import org.hinoob.chess.listener.JoinListener;
+import org.hinoob.chess.listener.PieceMoveListener;
+import org.hinoob.chess.playerdata.PlayerDataManager;
 
+@Getter
 public class ChessPlugin extends JavaPlugin {
+
+    @Getter @Setter private static ChessPlugin instance;
+
+    private PlayerDataManager playerDataManager = new PlayerDataManager();
+    private ArenaManager arenaManager = new ArenaManager();
+    private GameManager gameManager = new GameManager();
 
     @Override
     public void onEnable() {
-        super.onEnable();
+        instance = this;
+        CommandManager.register(this);
+        arenaManager.load(this);
+
+        getServer().getPluginManager().registerEvents(new JoinListener(), this);
+        getServer().getPluginManager().registerEvents(new PieceMoveListener(), this);
     }
 
     @Override
     public void onDisable() {
-        super.onDisable();
+        arenaManager.save();
     }
 
 }

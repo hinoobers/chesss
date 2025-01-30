@@ -1,0 +1,11 @@
+arenas:
+  testarena:
+    pos1:
+      x: 3
+      y: 3
+      z: 3
+    pos2:
+      x: 3
+      y: 3
+      z: 3
+    world: world

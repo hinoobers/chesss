@@ -12,13 +12,56 @@ public class Pawn extends ChessPiece {
         super(chessboard, isWhite);
     }
 
+    public Pawn(Chessboard chessboard, int x, int y, boolean isWhite) {
+        super(chessboard, isWhite);
+
+        moveWithoutMoves(x, y);
+    }
+
     @Override
     public void getPossibleMoves(List<Move> moves) {
         if(this.moves == 0) {
-            moves.add(new Move(this.board, this, this.x, this.y + 1));
-            moves.add(new Move(this.board, this, this.x, this.y + 2));
+            if(isWhite()) {
+                if(board.getPiece(this.x, this.y + 1) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y + 1, false));
+                }
+                if(board.getPiece(this.x, this.y + 2) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y + 2, false));
+                }
+            } else {
+                if(board.getPiece(this.x, this.y - 1) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y - 1, false));
+                }
+                if(board.getPiece(this.x, this.y - 2) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y - 2, false));
+                }
+            }
         } else {
-            moves.add(new Move(this.board, this, this.x, this.y + 1));
+            if(isWhite()) {
+                if(board.getPiece(this.x, this.y + 1) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y + 1, false));
+                }
+
+                if(board.getPiece(this.x - 1, this.y + 1) != null && board.getPiece(this.x - 1, this.y + 1).isWhite() != this.isWhite()) {
+                    moves.add(new Move(this.board, this, this.x - 1, this.y + 1, true));
+                }
+
+                if(board.getPiece(this.x + 1, this.y + 1) != null && board.getPiece(this.x + 1, this.y + 1).isWhite() != this.isWhite()) {
+                    moves.add(new Move(this.board, this, this.x + 1, this.y + 1, true));
+                }
+            } else {
+                if(board.getPiece(this.x, this.y - 1) == null) {
+                    moves.add(new Move(this.board, this, this.x, this.y - 1, false));
+                }
+
+                if(board.getPiece(this.x - 1, this.y - 1) != null && board.getPiece(this.x - 1, this.y - 1).isWhite() != this.isWhite()) {
+                    moves.add(new Move(this.board, this, this.x - 1, this.y - 1, true));
+                }
+
+                if(board.getPiece(this.x + 1, this.y - 1) != null && board.getPiece(this.x + 1, this.y - 1).isWhite() != this.isWhite()) {
+                    moves.add(new Move(this.board, this, this.x + 1, this.y - 1, true));
+                }
+            }
         }
     }
 
