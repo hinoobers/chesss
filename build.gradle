@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+
+        // As of Gradle 5.1, you can limit this to only those
+        // dependencies you expect from it
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup 'org.spigotmc'
+        }
+    }
+    maven { url = "https://jitpack.io" }
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    // Pick only one of these and read the comment in the repositories block.
+    compileOnly 'org.spigotmc:spigot:1.21.4-R0.1-SNAPSHOT' // The full Spigot server with no shadowing. Requires mavenLocal.
+    implementation("io.github.revxrsal:lamp.common:4.0.0-beta.2")
+    implementation("io.github.revxrsal:lamp.paper:4.0.0-beta.2")
+}
