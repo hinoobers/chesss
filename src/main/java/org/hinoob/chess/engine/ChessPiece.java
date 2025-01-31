@@ -89,6 +89,11 @@ public abstract class ChessPiece {
 
         ChessPiece piece = board.getPiece(newX, newY);
 
+        if(piece != null && piece.isWhite == this.isWhite) {
+            // Under no circumstance we can hop to our own square
+            return;
+        }
+
         if (piece == null && !captureOnly) { // Normal move
             moves.add(new Move(this.board, this, newX, newY, false));
         } else if (piece != null && piece.isWhite() != this.isWhite()) { // Capture move

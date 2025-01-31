@@ -50,6 +50,14 @@ public class ActiveArena {
         }
     }
 
+    public void cleanup() {
+        if(world != null) {
+            Bukkit.unloadWorld(world, false);
+        }
+
+        FileUtil.delete(new File(Bukkit.getWorldContainer(), worldName));
+    }
+
     public Location getOnePos() {
         Location loc = arena.getOne().clone();
         loc.setWorld(world);

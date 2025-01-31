@@ -1,5 +1,6 @@
 package org.hinoob.chess.game;
 
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.units.qual.C;
@@ -8,12 +9,26 @@ import org.hinoob.chess.arena.Arena;
 import org.hinoob.chess.engine.ChessPiece;
 import org.hinoob.chess.engine.Chessboard;
 import org.hinoob.chess.engine.Move;
+import org.hinoob.chess.util.LocationUtil;
 
 import java.util.*;
 
 public class GameManager {
 
     private List<ChessGame> games = new ArrayList<>();
+    @Getter private Location spawnLocation;
+
+    public void load() {
+        spawnLocation = LocationUtil.parseLocationFromConfig("spawn");
+    }
+
+    public void setSpawn(Location loc) {
+        spawnLocation = loc;
+    }
+
+    public void unregisterGame(ChessGame game) {
+        games.remove(game);
+    }
 
     public ChessGame createDummyGame(Player player) {
         ChessPlayer dummyBot = new ChessPlayer(UUID.randomUUID()) {

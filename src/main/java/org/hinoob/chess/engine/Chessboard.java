@@ -1,9 +1,7 @@
 package org.hinoob.chess.engine;
 
 import lombok.SneakyThrows;
-import org.hinoob.chess.engine.pieces.Horse;
-import org.hinoob.chess.engine.pieces.King;
-import org.hinoob.chess.engine.pieces.Pawn;
+import org.hinoob.chess.engine.pieces.*;
 import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.util.ArrayList;
@@ -31,8 +29,13 @@ public class Chessboard {
         pieces.add(new Pawn(this, 7, 1, true));
 
         pieces.add(new King(this, 3, 0, true));
+        pieces.add(new Queen(this, 4, 0, false));
         pieces.add(new Horse(this, 1, 0, true));
         pieces.add(new Horse(this, 6, 0, true));
+        pieces.add(new Rook(this, 0, 0, true));
+        pieces.add(new Rook(this, 7, 0, true));
+        pieces.add(new Bishop(this, 2, 0, true));
+        pieces.add(new Bishop(this, 5, 0, true));
 
         pieces.add(new Pawn(this, 0, 6, false));
         pieces.add(new Pawn(this, 1, 6, false));
@@ -44,8 +47,13 @@ public class Chessboard {
         pieces.add(new Pawn(this, 7, 6, false));
 
         pieces.add(new King(this, 3, 7, false));
+        pieces.add(new Queen(this, 4, 7, false));
         pieces.add(new Horse(this, 1, 7, false));
         pieces.add(new Horse(this, 6, 7, false));
+        pieces.add(new Rook(this, 0, 7, false));
+        pieces.add(new Rook(this, 7, 7, false));
+        pieces.add(new Bishop(this, 2, 7, false));
+        pieces.add(new Bishop(this, 5, 7, false));
     }
 
     @SneakyThrows
@@ -61,6 +69,7 @@ public class Chessboard {
 
     public boolean isWhiteKingInCheck() {
         King whiteKing = (King) pieces.stream().filter(p -> p.isWhite() && p instanceof King).findAny().orElse(null);
+        if(whiteKing == null) return false;
 
         for (ChessPiece otherPiece : pieces) {
             if (!otherPiece.isWhite()) { // Only black pieces attack
@@ -80,6 +89,7 @@ public class Chessboard {
 
     public boolean isBlackKingInCheck() {
         King blackKing = (King) pieces.stream().filter(p -> !p.isWhite() && p instanceof King).findAny().orElse(null);
+        if(blackKing == null) return false;
 
         for (ChessPiece otherPiece : pieces) {
             if (otherPiece.isWhite()) { // Only white pieces attack

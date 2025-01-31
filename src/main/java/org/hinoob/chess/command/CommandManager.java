@@ -13,6 +13,7 @@ public class CommandManager {
         Lamp<BukkitCommandActor> wrapper = BukkitLamp.builder(plugin).build();
         wrapper.register(new ArenaCommand());
         wrapper.register(new GameCommand());
+        wrapper.register(new SetSpawnCommand());
 
     }
 }

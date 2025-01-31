@@ -8,7 +8,8 @@ import org.hinoob.chess.arena.ArenaManager;
 import org.hinoob.chess.command.CommandManager;
 import org.hinoob.chess.game.GameManager;
 import org.hinoob.chess.listener.JoinListener;
-import org.hinoob.chess.listener.MobListener;
+import org.hinoob.chess.listener.LeaveListener;
+import org.hinoob.chess.listener.WorldProtectionListener;
 import org.hinoob.chess.listener.PieceMoveListener;
 import org.hinoob.chess.playerdata.PlayerDataManager;
 import org.hinoob.chess.util.FileUtil;
@@ -20,14 +21,17 @@ public class ChessPlugin extends JavaPlugin {
 
     @Getter @Setter private static ChessPlugin instance;
 
-    private PlayerDataManager playerDataManager = new PlayerDataManager();
-    private ArenaManager arenaManager = new ArenaManager();
-    private GameManager gameManager = new GameManager();
+    private final PlayerDataManager playerDataManager = new PlayerDataManager();
+    private final ArenaManager arenaManager = new ArenaManager();
+    private final GameManager gameManager = new GameManager();
 
     @Override
     public void onEnable() {
         instance = this;
+        saveDefaultConfig();
+
         CommandManager.register(this);
+        gameManager.load();
         arenaManager.load(this);
 
         for(File file : Bukkit.getWorldContainer().listFiles()) {
@@ -37,8 +41,9 @@ public class ChessPlugin extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new JoinListener(), this);
+        getServer().getPluginManager().registerEvents(new LeaveListener(), this);
         getServer().getPluginManager().registerEvents(new PieceMoveListener(), this);
-        getServer().getPluginManager().registerEvents(new MobListener(), this);
+        getServer().getPluginManager().registerEvents(new WorldProtectionListener(), this);
     }
 
     @Override

@@ -23,6 +23,7 @@ public class PieceMoveListener implements Listener {
     @EventHandler
     public void onClick(EntityDamageByEntityEvent event) {
         if(event.getDamager() instanceof Player) {
+            event.getDamager().sendMessage(event.getEntity().getName());
             PlayerData data = ChessPlugin.getInstance().getPlayerDataManager().getPlayerData(event.getDamager().getUniqueId());
             if(data.activeGame == null) return;
             event.setCancelled(true); // avoid damaging the entity

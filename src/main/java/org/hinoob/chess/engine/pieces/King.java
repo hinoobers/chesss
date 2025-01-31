@@ -35,9 +35,12 @@ public class King extends ChessPiece {
                 if (isOutOfBounds(newX, newY)) continue;
                 if (tempBoard.getPiece(newX, newY) != null) continue;
 
-                if (!isMoveCausingCheck(tempBoard, newX, newY)) {
+                tempBoard.movePiece(tempPiece, newX, newY);
+                boolean inCheck = isWhite() && tempBoard.isWhiteKingInCheck() || !isWhite() && tempBoard.isBlackKingInCheck();
+                if (!inCheck) {
                     moves.add(new Move(this.board, this, newX, newY, false));
                 }
+                tempBoard.movePiece(tempPiece, this.x, this.y);
             }
         }
 
@@ -64,9 +67,12 @@ public class King extends ChessPiece {
                 ChessPiece targetPiece = tempBoard.getPiece(newX, newY);
                 if (targetPiece == null || targetPiece.isWhite() == this.isWhite()) continue;
 
-                if (!isMoveCausingCheck(tempBoard, newX, newY)) {
+                tempBoard.movePiece(targetPiece, newX, newY);
+                boolean inCheck = isWhite() && tempBoard.isWhiteKingInCheck() || !isWhite() && tempBoard.isBlackKingInCheck();
+                if (!inCheck) {
                     captures.add(new Move(this.board, this, newX, newY, true));
                 }
+                tempBoard.movePiece(targetPiece, this.x, this.y); // revert
             }
         }
     }
@@ -79,33 +85,5 @@ public class King extends ChessPiece {
     // Helper method to check if a square is out of bounds
     private boolean isOutOfBounds(int x, int y) {
         return x < 0 || y < 0 || x > 7 || y > 7;
-    }
-
-    // Helper method to check if a move puts the king in check
-    private boolean isMoveCausingCheck(Chessboard tempBoard, int newX, int newY) {
-        ChessPiece tempPiece = tempBoard.getPiece(this.x, this.y);
-        int originalX = this.x;
-        int originalY = this.y;
-
-        // Move the piece temporarily to the new position
-        tempBoard.movePiece(tempPiece, newX, newY);
-
-        boolean inCheck = false;
-        for (ChessPiece other : tempBoard.getPieces()) {
-            if (other.isWhite() == this.isWhite()) continue;
-
-            List<Move> tempMoves = new ArrayList<>();
-            other.getCaptures(tempMoves);
-
-            if (tempMoves.stream().anyMatch(m -> m.getNewX() == newX && m.getNewY() == newY)) {
-                inCheck = true;
-                break;
-            }
-        }
-
-        // Restore the original position
-        tempBoard.movePiece(tempPiece, originalX, originalY);
-
-        return inCheck;
     }
 }
