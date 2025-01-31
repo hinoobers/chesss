@@ -71,6 +71,11 @@ public class King extends ChessPiece {
         }
     }
 
+    @Override
+    public void getMoves(List<Move> moves) {
+
+    }
+
     // Helper method to check if a square is out of bounds
     private boolean isOutOfBounds(int x, int y) {
         return x < 0 || y < 0 || x > 7 || y > 7;

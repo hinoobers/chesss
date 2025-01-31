@@ -36,4 +36,17 @@ public class Pawn extends ChessPiece {
         addMoveIfValid(captures, this.x - 1, this.y + direction, true);
         addMoveIfValid(captures, this.x + 1, this.y + direction, true);
     }
+
+    @Override
+    public void getMoves(List<Move> moves) {
+        int direction = isWhite() ? 1 : -1;
+        addMovesToBoard(moves, this.x - 1, this.y + direction, true);
+        addMovesToBoard(moves, this.x + 1, this.y + direction, true);
+
+        addMovesToBoard(moves, this.x, this.y + direction, false);
+
+        if(this.moves == 0) {
+            addMovesToBoard(moves, this.x, this.y + (2 * direction), false);
+        }
+    }
 }

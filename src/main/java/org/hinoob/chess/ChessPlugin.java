@@ -8,6 +8,7 @@ import org.hinoob.chess.arena.ArenaManager;
 import org.hinoob.chess.command.CommandManager;
 import org.hinoob.chess.game.GameManager;
 import org.hinoob.chess.listener.JoinListener;
+import org.hinoob.chess.listener.MobListener;
 import org.hinoob.chess.listener.PieceMoveListener;
 import org.hinoob.chess.playerdata.PlayerDataManager;
 import org.hinoob.chess.util.FileUtil;
@@ -37,6 +38,7 @@ public class ChessPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new JoinListener(), this);
         getServer().getPluginManager().registerEvents(new PieceMoveListener(), this);
+        getServer().getPluginManager().registerEvents(new MobListener(), this);
     }
 
     @Override

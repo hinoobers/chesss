@@ -8,6 +8,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
+import org.checkerframework.checker.units.qual.C;
 import org.hinoob.chess.ChessPlugin;
 import org.hinoob.chess.arena.ActiveArena;
 import org.hinoob.chess.arena.Arena;
@@ -29,7 +30,7 @@ public class ChessGame {
     private ChessPlayer player2;
     private ActiveArena arena;
 
-    private Chessboard board = new Chessboard();
+    private Chessboard board;
     private Map<ChessPiece, Entity> entities = new HashMap<>();
     private int totalMoves = 0;
 
@@ -37,6 +38,7 @@ public class ChessGame {
         this.player1 = player1;
         this.player2 = player2;
         this.arena = new ActiveArena(arena);
+        this.board = new Chessboard();
 
         // probably a better way to handle this
         if(player1.isHuman()) {
@@ -46,7 +48,7 @@ public class ChessGame {
         }
         if(player2.isHuman()) {
             PlayerData plr2 = ChessPlugin.getInstance().getPlayerDataManager().getPlayerData(player2.getUUID());
-            plr2.player = player1;
+            plr2.player = player2;
             plr2.activeGame = this;
         }
         this.arena.createWorld();
@@ -61,47 +63,13 @@ public class ChessGame {
         return player1.isWhite() ? player2 : player1;
     }
 
-    public void handleMove(ChessPiece piece, Move move, ChessPlayer player, ChessCallback callback) {
-        boolean invalidMove = false;
-        Chessboard tempBoard = new Chessboard();
-        tempBoard.loadPiecesFrom(board);
-
-        tempBoard.movePiece(piece, move.getNewX(), move.getNewY());
-        King whiteKing = (King) tempBoard.getPieces().stream().filter(p -> p.isWhite() && p instanceof King).findAny().orElse(null);
-        King blackKing = (King) tempBoard.getPieces().stream().filter(p -> !p.isWhite() && p instanceof King).findAny().orElse(null);
-
-        if (player.isWhite()) {
-            for (ChessPiece otherPiece : tempBoard.getPieces()) {
-                if (otherPiece.isWhite()) continue;
-
-                List<Move> captures = new ArrayList<>();
-                otherPiece.getCaptures(captures);
-
-                if (captures.stream().anyMatch(s -> s.getNewX() == whiteKing.getX() && s.getNewY() == whiteKing.getY())) {
-                    invalidMove = true;
-                    break;
-                }
-            }
-        } else {
-            for (ChessPiece otherPiece : tempBoard.getPieces()) {
-                if (!otherPiece.isWhite()) continue;
-
-                List<Move> captures = new ArrayList<>();
-                otherPiece.getCaptures(captures);
-
-                if (captures.stream().anyMatch(s -> s.getNewX() == blackKing.getX() && s.getNewY() == blackKing.getY())) {
-                    invalidMove = true;
-                    break;
-                }
-            }
+    public void handleMove(ChessPiece piece, Move move, ChessPlayer player) {
+        if(move.isCapture()) {
+            // Remove it from here
+            ChessPiece captured = board.getPiece(move.getNewX(), move.getNewY());
+            entities.get(captured).remove();
+            entities.remove(captured);
         }
-        if (invalidMove) {
-            if (callback != null) {
-                callback.kingInCheck();
-            }
-            return;
-        }
-
         board.movePiece(piece, move.getNewX(), move.getNewY());
         ++totalMoves;
         refreshEntitiesOnBoard(false);
@@ -111,20 +79,17 @@ public class ChessGame {
         ChessPlayer other = (player.equals(player1) ? player2 : player1);
         if(!other.isHuman()) {
             Move next = other.getNextMove(board);
-            handleMove(next.getBoard().getPiece(next.getOldX(), next.getOldY()), next, other, null);
+            handleMove(next.getBoard().getPiece(next.getOldX(), next.getOldY()), next, other);
         }
-    }
-
-    public interface ChessCallback {
-        void success();
-        void kingInCheck();
     }
 
     private void assignTeams() {
         if(new Random().nextBoolean()) {
-            player1.setWhite(true);
+            player1.setWhite();
+            player2.setBlack();
         } else {
-            player2.setWhite(true);
+            player1.setBlack();
+            player2.setWhite();;
         }
     }
 
@@ -176,19 +141,13 @@ public class ChessGame {
             }
         }
 
-        // cleanup
-        Iterator<Map.Entry<ChessPiece, Entity>> iterator = entities.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<ChessPiece, Entity> entry = iterator.next();
-            if (!currentPieces.contains(entry.getKey())) {
-                entry.getValue().remove();
-                iterator.remove(); //
-            }
-        }
-
         // make blacks look at whites for the best
         for(ChessPiece piece : currentPieces) {
             if(piece.isWhite()) continue;
+            if(!entities.containsKey(piece)) {
+                // TODO: Might wanna come back to this
+                continue;
+            }
 
             Location loc = entities.get(piece).getLocation();
             loc.setYaw(loc.getYaw() + 180);

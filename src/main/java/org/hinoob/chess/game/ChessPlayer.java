@@ -24,8 +24,12 @@ public abstract class ChessPlayer {
         return uuid;
     }
 
-    public void setWhite(boolean isWhite) {
-        this.isWhite = isWhite;
+    public void setBlack() {
+        this.isWhite = false;
+    }
+
+    public void setWhite() {
+        this.isWhite = true;
     }
 
     public boolean isWhite() {

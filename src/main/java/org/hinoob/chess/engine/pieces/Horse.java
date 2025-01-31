@@ -39,4 +39,25 @@ public class Horse extends ChessPiece {
         addMoveIfValid(captures, this.x - 2, this.y - 1, true);
         addMoveIfValid(captures, this.x - 1, this.y - 2, true);
     }
+
+    @Override
+    public void getMoves(List<Move> moves) {
+        addMovesToBoard(moves, this.x + 1, this.y + 2, true);
+        addMovesToBoard(moves, this.x + 2, this.y + 1, true);
+        addMovesToBoard(moves, this.x + 2, this.y - 1, true);
+        addMovesToBoard(moves, this.x + 1, this.y - 2, true);
+        addMovesToBoard(moves, this.x - 1, this.y + 2, true);
+        addMovesToBoard(moves, this.x - 2, this.y + 1, true);
+        addMovesToBoard(moves, this.x - 2, this.y - 1, true);
+        addMovesToBoard(moves, this.x - 1, this.y - 2, true);
+
+        addMovesToBoard(moves, this.x + 1, this.y + 2, false);
+        addMovesToBoard(moves, this.x + 2, this.y + 1, false);
+        addMovesToBoard(moves, this.x + 2, this.y - 1, false);
+        addMovesToBoard(moves, this.x + 1, this.y - 2, false);
+        addMovesToBoard(moves, this.x - 1, this.y + 2, false);
+        addMovesToBoard(moves, this.x - 2, this.y + 1, false);
+        addMovesToBoard(moves, this.x - 2, this.y - 1, false);
+        addMovesToBoard(moves, this.x - 1, this.y - 2, false);
+    }
 }

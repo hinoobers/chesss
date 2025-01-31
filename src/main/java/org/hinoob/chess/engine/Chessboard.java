@@ -1,5 +1,6 @@
 package org.hinoob.chess.engine;
 
+import lombok.SneakyThrows;
 import org.hinoob.chess.engine.pieces.Horse;
 import org.hinoob.chess.engine.pieces.King;
 import org.hinoob.chess.engine.pieces.Pawn;
@@ -12,6 +13,12 @@ public class Chessboard {
 
     private List<ChessPiece> pieces = new ArrayList<>();
     private boolean whiteTurn = true;
+
+
+    public Chessboard() {
+
+    }
+
 
     public void loadPieces() {
         pieces.add(new Pawn(this, 0, 1, true));
@@ -41,10 +48,56 @@ public class Chessboard {
         pieces.add(new Horse(this, 6, 7, false));
     }
 
+    @SneakyThrows
     public void loadPiecesFrom(Chessboard board) {
-        this.pieces = new ArrayList<>(board.pieces);
+        this.pieces = new ArrayList<>();
+        for(ChessPiece piece : board.pieces) {
+            ChessPiece pc = piece.clone();
+            pc.board = this;
+            this.pieces.add(pc);
+        }
         this.whiteTurn = board.whiteTurn;
     }
+
+    public boolean isWhiteKingInCheck() {
+        King whiteKing = (King) pieces.stream().filter(p -> p.isWhite() && p instanceof King).findAny().orElse(null);
+
+        for (ChessPiece otherPiece : pieces) {
+            if (!otherPiece.isWhite()) { // Only black pieces attack
+                List<Move> captures = new ArrayList<>();
+                otherPiece.getMoves(captures);
+
+                for (Move move : captures) {
+                    if (move.isCapture() && move.getNewX() == whiteKing.getX() && move.getNewY() == whiteKing.getY()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isBlackKingInCheck() {
+        King blackKing = (King) pieces.stream().filter(p -> !p.isWhite() && p instanceof King).findAny().orElse(null);
+
+        for (ChessPiece otherPiece : pieces) {
+            if (otherPiece.isWhite()) { // Only white pieces attack
+                List<Move> captures = new ArrayList<>();
+
+                otherPiece.getMoves(captures);
+
+                for (Move move : captures) {
+                    if (move.isCapture() && move.getNewX() == blackKing.getX() && move.getNewY() == blackKing.getY()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     public boolean isWhiteTurn() {
         return whiteTurn;
@@ -54,45 +107,15 @@ public class Chessboard {
         whiteTurn = !whiteTurn;
     }
 
-    public boolean checkBounds(int x, int y) {
-        return x >= 0 && x <= 7 && y >= 0 && y <= 7;
-    }
-
     public void movePiece(ChessPiece piece, int newX, int newY) {
         ChessPiece targetPiece = getPiece(newX, newY);
         if (targetPiece != null) {
-            removePiece(targetPiece);
+            pieces.remove(targetPiece);
         }
         piece.move(newX, newY);
         pieces.add(piece);
     }
 
-
-    public boolean isWhiteWin() {
-        // a lot of calculation
-        ChessPiece blackKing = pieces.stream().filter(p -> !p.isWhite() && p instanceof King).findFirst().orElse(null);
-
-        boolean canTake = false;
-        for(ChessPiece whitePiece : pieces.stream().filter(ChessPiece::isWhite).toList()) {
-            List<Move> captures = new ArrayList<>();
-            whitePiece.getCaptures(captures);
-
-            for(Move capture : captures) {
-                if(capture.getNewX() == blackKing.getX() && capture.getNewY() == blackKing.getY()) {
-                    canTake = true;
-                }
-            }
-        }
-
-        List<Move> blackMoves = new ArrayList<>();
-        blackKing.getPossibleMoves(blackMoves);
-
-        return blackMoves.isEmpty() && canTake;
-    }
-
-    public boolean isBlackWin() {
-        return false;
-    }
 
     public List<ChessPiece> getPieces() {
         return pieces;
@@ -100,9 +123,5 @@ public class Chessboard {
 
     public ChessPiece getPiece(int x, int y) {
         return pieces.stream().filter(p -> p.getX() == x && p.getY() == y).findFirst().orElse(null);
-    }
-
-    public void removePiece(ChessPiece piece) {
-        pieces.remove(piece);
     }
 }

@@ -1,5 +1,6 @@
 package org.hinoob.chess.listener;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -24,47 +25,43 @@ public class PieceMoveListener implements Listener {
         if(event.getDamager() instanceof Player) {
             PlayerData data = ChessPlugin.getInstance().getPlayerDataManager().getPlayerData(event.getDamager().getUniqueId());
             if(data.activeGame == null) return;
+            event.setCancelled(true); // avoid damaging the entity
 
-//            if(data.activeGame.getBoard().isWhiteTurn() && !data.player.isWhite()) {
-//                event.getDamager().sendMessage(ChatColor.RED + "It's not your turn!");
-//                return;
-//            } else if(!data.activeGame.getBoard().isWhiteTurn() && data.player.isWhite()) {
-//                event.getDamager().sendMessage(ChatColor.RED + "It's not your turn!");
-//                return;
-//            }
+            if(data.activeGame.getBoard().isWhiteTurn() != data.player.isWhite()) {
+                event.getDamager().sendMessage(ChatColor.RED + "It's not your turn!");
+                event.getDamager().sendMessage("You are: " + (data.player.isWhite() ? "White" : "Black"));
+                event.getDamager().sendMessage("It is " + (data.activeGame.getBoard().isWhiteTurn() ? "White" : "Black") + "'s turn");
+                event.getDamager().sendMessage(Bukkit.getPlayer(data.player.getUUID()).getName());
+                return;
+            }
 
             ChessPiece piece = data.activeGame.entityToPiece(event.getEntity());
-//            if(piece.isWhite() != data.player.isWhite()) {
-//                event.getDamager().sendMessage(ChatColor.RED + "It's not your piece!");
-//                return;
-//            }
+            if(piece.isWhite() != data.player.isWhite()) {
+                event.getDamager().sendMessage(ChatColor.RED + "It's not your piece!");
+                event.getDamager().sendMessage("You are: " + (data.player.isWhite() ? "White" : "Black"));
+                event.getDamager().sendMessage("Piece is " + (piece.isWhite() ? "White" : "Black"));
+                return;
+            }
 
             data.selectedPiece = piece;
             event.getDamager().sendMessage("You selected that piece! Now hit where you want it to move to!");
             event.getDamager().sendMessage("Position: " + piece.getX() + ", " + piece.getY());
-            List<Move> attacking = new ArrayList<>();
-            piece.getCaptures(attacking);
-            event.getDamager().sendMessage("Attacking:");
-            for(Move m : attacking) {
-                event.getDamager().sendMessage("  " + m.getNewX() + ", " + m.getNewY());
-            }
-            attacking.clear();
-            piece.getPossibleMoves(attacking);
             event.getDamager().sendMessage("Possible moves:");
-            for(Move m : attacking) {
-                event.getDamager().sendMessage("  " + m.getNewX() + ", " + m.getNewY());
+            List<Move> possibleMoves = new ArrayList<>();
+            data.selectedPiece.getPossibleMoves(possibleMoves);
+            for(Move m : possibleMoves) {
+                event.getDamager().sendMessage("[x=" + m.getNewX() + ", y=" + m.getNewY() + "]" + (m.isCapture() ? " (CAPTURE)" : ""));
             }
-            event.setCancelled(true); // avoid damaging the entity
         }
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         PlayerData data = ChessPlugin.getInstance().getPlayerDataManager().getPlayerData(event.getPlayer().getUniqueId());
-        if(data.activeGame == null || data.selectedPiece == null) return;
+        if(data.activeGame == null) return;
         event.setCancelled(true);
 
-        //if(data.selectedPiece == null || (data.selectedPiece.isWhite() && !data.player.isWhite()) || (!data.selectedPiece.isWhite() && data.player.isWhite())) return;
+        if(data.selectedPiece == null || (data.selectedPiece.isWhite() && !data.player.isWhite()) || (!data.selectedPiece.isWhite() && data.player.isWhite())) return;
         boolean allow = false;
         if(data.activeGame.getBoard().isWhiteTurn() && data.player.isWhite()) {
             allow = true;
@@ -73,33 +70,19 @@ public class PieceMoveListener implements Listener {
         }
 
         if(!allow) {
-            //return;
+            return;
         }
 
         Location loc = event.getBlock().getLocation().clone().add(0,1,0).subtract(data.activeGame.getArena().getOnePos());
         if(loc.getX() < 0 || loc.getZ() < 0 || loc.getX() > 7 || loc.getZ() > 7) return; // Out of bounds
 
-        if(true) {
-            event.getPlayer().sendMessage("POS: " + loc.getX() + ", " + loc.getZ());
-            //return;
-        }
 
         List<Move> possibleMoves = new ArrayList<>();
         data.selectedPiece.getPossibleMoves(possibleMoves);
 
         Optional<Move> opt = possibleMoves.stream().filter(s -> s.getNewX() == loc.getX() && s.getNewY() == loc.getZ()).findFirst();
         if(opt.isPresent()) {
-            data.activeGame.handleMove(data.selectedPiece, opt.get(), data.player, new ChessGame.ChessCallback() {
-                @Override
-                public void success() {
-
-                }
-
-                @Override
-                public void kingInCheck() {
-                    event.getPlayer().sendMessage(ChatColor.RED + "You are in check! (Invalid move)");
-                }
-            });
+            data.activeGame.handleMove(data.selectedPiece, opt.get(), data.player);
             data.selectedPiece = null;
         } else {
             event.getPlayer().sendMessage(ChatColor.RED + "That's an illegal move!");

@@ -9,10 +9,7 @@ import org.hinoob.chess.engine.ChessPiece;
 import org.hinoob.chess.engine.Chessboard;
 import org.hinoob.chess.engine.Move;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class GameManager {
 
@@ -55,5 +52,15 @@ public class GameManager {
         };
         Arena arena = ChessPlugin.getInstance().getArenaManager().getRandomArena();
         return new ChessGame(arena, ChessPlayer.from(player), dummyBot);
+    }
+    public ChessGame createGame(Player player1, Player player2) {
+        ChessPlayer pl1 = ChessPlayer.from(player1);
+        ChessPlayer pl2 = ChessPlayer.from(player2);
+        Arena arena = ChessPlugin.getInstance().getArenaManager().getRandomArena();
+        return new ChessGame(arena, pl1, pl2);
+    }
+
+    public Collection<ChessGame> getGames() {
+        return Collections.unmodifiableCollection(games);
     }
 }
