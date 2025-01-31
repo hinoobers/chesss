@@ -10,6 +10,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.hinoob.chess.ChessPlugin;
 import org.hinoob.chess.engine.ChessPiece;
 import org.hinoob.chess.engine.Move;
+import org.hinoob.chess.game.ChessGame;
 import org.hinoob.chess.playerdata.PlayerData;
 
 import java.util.ArrayList;
@@ -40,13 +41,27 @@ public class PieceMoveListener implements Listener {
 
             data.selectedPiece = piece;
             event.getDamager().sendMessage("You selected that piece! Now hit where you want it to move to!");
+            event.getDamager().sendMessage("Position: " + piece.getX() + ", " + piece.getY());
+            List<Move> attacking = new ArrayList<>();
+            piece.getCaptures(attacking);
+            event.getDamager().sendMessage("Attacking:");
+            for(Move m : attacking) {
+                event.getDamager().sendMessage("  " + m.getNewX() + ", " + m.getNewY());
+            }
+            attacking.clear();
+            piece.getPossibleMoves(attacking);
+            event.getDamager().sendMessage("Possible moves:");
+            for(Move m : attacking) {
+                event.getDamager().sendMessage("  " + m.getNewX() + ", " + m.getNewY());
+            }
+            event.setCancelled(true); // avoid damaging the entity
         }
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         PlayerData data = ChessPlugin.getInstance().getPlayerDataManager().getPlayerData(event.getPlayer().getUniqueId());
-        if(data.activeGame == null) return;
+        if(data.activeGame == null || data.selectedPiece == null) return;
         event.setCancelled(true);
 
         //if(data.selectedPiece == null || (data.selectedPiece.isWhite() && !data.player.isWhite()) || (!data.selectedPiece.isWhite() && data.player.isWhite())) return;
@@ -62,15 +77,34 @@ public class PieceMoveListener implements Listener {
         }
 
         Location loc = event.getBlock().getLocation().clone().add(0,1,0).subtract(data.activeGame.getArena().getOnePos());
+        if(loc.getX() < 0 || loc.getZ() < 0 || loc.getX() > 7 || loc.getZ() > 7) return; // Out of bounds
+
+        if(true) {
+            event.getPlayer().sendMessage("POS: " + loc.getX() + ", " + loc.getZ());
+            //return;
+        }
+
         List<Move> possibleMoves = new ArrayList<>();
         data.selectedPiece.getPossibleMoves(possibleMoves);
 
         Optional<Move> opt = possibleMoves.stream().filter(s -> s.getNewX() == loc.getX() && s.getNewY() == loc.getZ()).findFirst();
         if(opt.isPresent()) {
-            data.activeGame.handleMove(data.selectedPiece, opt.get(), data.player);
+            data.activeGame.handleMove(data.selectedPiece, opt.get(), data.player, new ChessGame.ChessCallback() {
+                @Override
+                public void success() {
+
+                }
+
+                @Override
+                public void kingInCheck() {
+                    event.getPlayer().sendMessage(ChatColor.RED + "You are in check! (Invalid move)");
+                }
+            });
             data.selectedPiece = null;
         } else {
             event.getPlayer().sendMessage(ChatColor.RED + "That's an illegal move!");
+            event.getPlayer().sendMessage("Move: " + loc.getX() + ", " + loc.getZ());
+            event.getPlayer().sendMessage("Possible moves: " + possibleMoves.toString());
         }
     }
 }

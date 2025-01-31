@@ -33,4 +33,16 @@ public class FileUtil {
             }
         }
     }
+
+    public static void delete(File file) {
+        if(file.isDirectory()) {
+            String[] children = file.list();
+            if(children != null) {
+                for(String child : children) {
+                    delete(new File(file, child));
+                }
+            }
+        }
+        file.delete();
+    }
 }

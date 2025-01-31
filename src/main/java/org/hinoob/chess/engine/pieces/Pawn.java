@@ -13,56 +13,27 @@ public class Pawn extends ChessPiece {
     }
 
     public Pawn(Chessboard chessboard, int x, int y, boolean isWhite) {
-        super(chessboard, isWhite);
-
-        moveWithoutMoves(x, y);
+        super(chessboard, x, y, isWhite);
     }
 
     @Override
     public void getPossibleMoves(List<Move> moves) {
-        if(this.moves == 0) {
-            if(isWhite()) {
-                if(board.getPiece(this.x, this.y + 1) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y + 1, false));
-                }
-                if(board.getPiece(this.x, this.y + 2) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y + 2, false));
-                }
-            } else {
-                if(board.getPiece(this.x, this.y - 1) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y - 1, false));
-                }
-                if(board.getPiece(this.x, this.y - 2) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y - 2, false));
-                }
-            }
-        } else {
-            if(isWhite()) {
-                if(board.getPiece(this.x, this.y + 1) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y + 1, false));
-                }
+        int direction = isWhite() ? 1 : -1; // White moves up, Black moves down
 
-                if(board.getPiece(this.x - 1, this.y + 1) != null && board.getPiece(this.x - 1, this.y + 1).isWhite() != this.isWhite()) {
-                    moves.add(new Move(this.board, this, this.x - 1, this.y + 1, true));
-                }
+        addMoveIfValid(moves, this.x, this.y + direction, false);
 
-                if(board.getPiece(this.x + 1, this.y + 1) != null && board.getPiece(this.x + 1, this.y + 1).isWhite() != this.isWhite()) {
-                    moves.add(new Move(this.board, this, this.x + 1, this.y + 1, true));
-                }
-            } else {
-                if(board.getPiece(this.x, this.y - 1) == null) {
-                    moves.add(new Move(this.board, this, this.x, this.y - 1, false));
-                }
-
-                if(board.getPiece(this.x - 1, this.y - 1) != null && board.getPiece(this.x - 1, this.y - 1).isWhite() != this.isWhite()) {
-                    moves.add(new Move(this.board, this, this.x - 1, this.y - 1, true));
-                }
-
-                if(board.getPiece(this.x + 1, this.y - 1) != null && board.getPiece(this.x + 1, this.y - 1).isWhite() != this.isWhite()) {
-                    moves.add(new Move(this.board, this, this.x + 1, this.y - 1, true));
-                }
-            }
+        // first move gets 2 squares
+        if (this.moves == 0) {
+            addMoveIfValid(moves, this.x, this.y + (2 * direction), false);
         }
+
+        getCaptures(moves);
     }
 
+    @Override
+    public void getCaptures(List<Move> captures) {
+        int direction = isWhite() ? 1 : -1;
+        addMoveIfValid(captures, this.x - 1, this.y + direction, true);
+        addMoveIfValid(captures, this.x + 1, this.y + direction, true);
+    }
 }

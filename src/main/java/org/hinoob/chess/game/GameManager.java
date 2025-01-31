@@ -5,10 +5,13 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.units.qual.C;
 import org.hinoob.chess.ChessPlugin;
 import org.hinoob.chess.arena.Arena;
+import org.hinoob.chess.engine.ChessPiece;
+import org.hinoob.chess.engine.Chessboard;
 import org.hinoob.chess.engine.Move;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 public class GameManager {
@@ -18,8 +21,16 @@ public class GameManager {
     public ChessGame createDummyGame(Player player) {
         ChessPlayer dummyBot = new ChessPlayer(UUID.randomUUID()) {
             @Override
-            public Move getNextMove() {
-                return null;
+            public Move getNextMove(Chessboard board) {
+                List<ChessPiece> whitePieces = board.getPieces().stream().filter(d -> d.isWhite() == this.isWhite()).toList();
+                List<Move> moves = new ArrayList<>();
+                Random rand = new Random();
+
+                for(ChessPiece piece : whitePieces) {
+                    piece.getPossibleMoves(moves);
+                }
+
+                return moves.get(rand.nextInt(moves.size()));
             }
 
             @Override
@@ -29,6 +40,11 @@ public class GameManager {
 
             @Override
             public void teleport(Location loc) {
+
+            }
+
+            @Override
+            public void setFlying(boolean flying) {
 
             }
 

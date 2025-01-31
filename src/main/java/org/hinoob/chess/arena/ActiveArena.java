@@ -22,7 +22,7 @@ public class ActiveArena {
     }
 
     public void createWorld() {
-        worldName = arena.getName() + "_" + UUID.randomUUID().toString().split("-")[0] + "_ac";
+        worldName = arena.getName() + "_" + UUID.randomUUID().toString().split("-")[0] + "_achess";
         FileUtil.copy(new File(Bukkit.getWorldContainer(), arena.getWorldName()), new File(Bukkit.getWorldContainer(), worldName));
 
         // Will cause issues if these are not deleted

@@ -2,6 +2,7 @@ package org.hinoob.chess.game;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -13,9 +14,12 @@ import org.hinoob.chess.arena.Arena;
 import org.hinoob.chess.engine.ChessPiece;
 import org.hinoob.chess.engine.Chessboard;
 import org.hinoob.chess.engine.Move;
+import org.hinoob.chess.engine.pieces.Horse;
+import org.hinoob.chess.engine.pieces.King;
 import org.hinoob.chess.engine.pieces.Pawn;
 import org.hinoob.chess.playerdata.PlayerData;
 import org.hinoob.chess.playerdata.PlayerDataManager;
+import org.hinoob.chess.util.LocationUtil;
 
 import java.util.*;
 
@@ -57,17 +61,63 @@ public class ChessGame {
         return player1.isWhite() ? player2 : player1;
     }
 
-    public void handleMove(ChessPiece piece, Move move, ChessPlayer player) {
-        if(move.isCapture()) {
-            ChessPiece targetPiece = board.getPiece(move.getNewX(), move.getNewY());
-            board.removePiece(targetPiece);
-            entities.get(targetPiece).remove();
-            entities.remove(targetPiece);
+    public void handleMove(ChessPiece piece, Move move, ChessPlayer player, ChessCallback callback) {
+        boolean invalidMove = false;
+        Chessboard tempBoard = new Chessboard();
+        tempBoard.loadPiecesFrom(board);
+
+        tempBoard.movePiece(piece, move.getNewX(), move.getNewY());
+        King whiteKing = (King) tempBoard.getPieces().stream().filter(p -> p.isWhite() && p instanceof King).findAny().orElse(null);
+        King blackKing = (King) tempBoard.getPieces().stream().filter(p -> !p.isWhite() && p instanceof King).findAny().orElse(null);
+
+        if (player.isWhite()) {
+            for (ChessPiece otherPiece : tempBoard.getPieces()) {
+                if (otherPiece.isWhite()) continue;
+
+                List<Move> captures = new ArrayList<>();
+                otherPiece.getCaptures(captures);
+
+                if (captures.stream().anyMatch(s -> s.getNewX() == whiteKing.getX() && s.getNewY() == whiteKing.getY())) {
+                    invalidMove = true;
+                    break;
+                }
+            }
+        } else {
+            for (ChessPiece otherPiece : tempBoard.getPieces()) {
+                if (!otherPiece.isWhite()) continue;
+
+                List<Move> captures = new ArrayList<>();
+                otherPiece.getCaptures(captures);
+
+                if (captures.stream().anyMatch(s -> s.getNewX() == blackKing.getX() && s.getNewY() == blackKing.getY())) {
+                    invalidMove = true;
+                    break;
+                }
+            }
         }
-        piece.move(move.getNewX(), move.getNewY());
+        if (invalidMove) {
+            if (callback != null) {
+                callback.kingInCheck();
+            }
+            return;
+        }
+
+        board.movePiece(piece, move.getNewX(), move.getNewY());
         ++totalMoves;
-        refreshEntitiesOnBoard();
+        refreshEntitiesOnBoard(false);
         board.flip();
+
+        // bot support
+        ChessPlayer other = (player.equals(player1) ? player2 : player1);
+        if(!other.isHuman()) {
+            Move next = other.getNextMove(board);
+            handleMove(next.getBoard().getPiece(next.getOldX(), next.getOldY()), next, other, null);
+        }
+    }
+
+    public interface ChessCallback {
+        void success();
+        void kingInCheck();
     }
 
     private void assignTeams() {
@@ -91,13 +141,16 @@ public class ChessGame {
         return arena;
     }
 
-    private void refreshEntitiesOnBoard() {
-        for(ChessPiece piece : board.getPieces()) {
+    private void refreshEntitiesOnBoard(boolean force) {
+        List<ChessPiece> currentPieces = new ArrayList<>(board.getPieces());
+
+        for(ChessPiece piece : currentPieces) {
             Location x = arena.getOnePos().add(piece.getX() + .5, 1, piece.getY() + .5);
+
 
             if(entities.containsKey(piece)) {
                 entities.get(piece).teleport(x);
-            } else if(totalMoves == 0){
+            } else if(force){
                 if(piece instanceof Pawn) {
                     Villager villager = (Villager) x.getWorld().spawnEntity(x, EntityType.VILLAGER);
                     villager.setAI(false);
@@ -105,8 +158,41 @@ public class ChessGame {
                     villager.setCustomName(piece.isWhite() ? "(W) Pawn" : "(B) Pawn");
                     villager.setCustomNameVisible(true);
                     entities.put(piece, villager);
+                } else if(piece instanceof King) {
+                    Villager villager = (Villager) x.getWorld().spawnEntity(x, EntityType.VILLAGER);
+                    villager.setAI(false);
+                    villager.setSilent(true);
+                    villager.setCustomName(piece.isWhite() ? "(W) King" : "(B) King");
+                    villager.setCustomNameVisible(true);
+                    entities.put(piece, villager);
+                } else if(piece instanceof Horse) {
+                    org.bukkit.entity.Horse horse = (org.bukkit.entity.Horse) x.getWorld().spawnEntity(x, EntityType.HORSE);
+                    horse.setCustomName(piece.isWhite() ? "(W) Horse" : "(B) Horse");
+                    horse.setCustomNameVisible(true);
+                    horse.setAI(false);
+                    horse.setSilent(true);
+                    entities.put(piece, horse);
                 }
             }
+        }
+
+        // cleanup
+        Iterator<Map.Entry<ChessPiece, Entity>> iterator = entities.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ChessPiece, Entity> entry = iterator.next();
+            if (!currentPieces.contains(entry.getKey())) {
+                entry.getValue().remove();
+                iterator.remove(); //
+            }
+        }
+
+        // make blacks look at whites for the best
+        for(ChessPiece piece : currentPieces) {
+            if(piece.isWhite()) continue;
+
+            Location loc = entities.get(piece).getLocation();
+            loc.setYaw(loc.getYaw() + 180);
+            entities.get(piece).teleport(loc);
         }
     }
 
@@ -126,21 +212,29 @@ public class ChessGame {
 
         World world = arena.getOnePos().getWorld();
 
+        Location one = new Location(world, arena.getOnePos().getBlockX(), world.getHighestBlockYAt(arena.getOnePos().getBlockX(), arena.getOnePos().getBlockZ()) + 1, arena.getOnePos().getBlockZ());
+        Location two = new Location(world, arena.getTwoPos().getBlockX(), world.getHighestBlockYAt(arena.getTwoPos().getBlockX(), arena.getTwoPos().getBlockZ()) + 1, arena.getTwoPos().getBlockZ());
+
+        LocationUtil.ensureSafeTeleport(one);
+        LocationUtil.ensureSafeTeleport(two);
+
+        player1.setFlying(true);
+        player2.setFlying(true);
         if(player1.isWhite()) {
             player1.sendMessage("You are white!");
             player2.sendMessage("You are black!");
 
-            player1.teleport(new Location(world, arena.getOnePos().getBlockX(), world.getHighestBlockYAt(arena.getOnePos().getBlockX(), arena.getOnePos().getBlockZ()) + 1, arena.getOnePos().getBlockZ()));
-            player2.teleport(new Location(world, arena.getTwoPos().getBlockX(), world.getHighestBlockYAt(arena.getTwoPos().getBlockX(), arena.getTwoPos().getBlockZ()) + 1, arena.getTwoPos().getBlockZ()));
+            player1.teleport(one);
+            player2.teleport(two);
         } else {
             player2.sendMessage("You are white!");
             player1.sendMessage("You are black!");
 
-            player2.teleport(new Location(world, arena.getOnePos().getBlockX(), world.getHighestBlockYAt(arena.getOnePos().getBlockX(), arena.getOnePos().getBlockZ()) + 1, arena.getOnePos().getBlockZ()));
-            player1.teleport(new Location(world, arena.getTwoPos().getBlockX(), world.getHighestBlockYAt(arena.getTwoPos().getBlockX(), arena.getTwoPos().getBlockZ()) + 1, arena.getTwoPos().getBlockZ()));
+            player1.teleport(two);
+            player2.teleport(one);
         }
 
-        refreshEntitiesOnBoard();
+        refreshEntitiesOnBoard(true);
     }
 
 

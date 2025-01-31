@@ -1,5 +1,8 @@
 package org.hinoob.chess.engine;
 
+import lombok.Getter;
+
+@Getter
 public class Move {
 
     private Chessboard board;
@@ -25,27 +28,9 @@ public class Move {
         this.isCapture = capture;
     }
 
-    public boolean isCapture() {
-        return isCapture;
-    }
 
-    public Chessboard getBoard() {
-        return board;
-    }
 
-    public int getOldX() {
-        return oldX;
-    }
-
-    public int getOldY() {
-        return oldY;
-    }
-
-    public int getNewX() {
-        return newX;
-    }
-
-    public int getNewY() {
-        return newY;
+    public String toString() {
+        return "move[newx=" + newX + ",newy=" + newY + ",oldx=" + oldX + ",oldy=" + oldY + "]";
     }
 }
